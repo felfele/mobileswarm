@@ -8,12 +8,14 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/p2p"
+	"github.com/ethereum/go-ethereum/p2p/enode"
 	"github.com/ethereum/go-ethereum/p2p/nat"
 	"github.com/ethereum/go-ethereum/params"
 
@@ -22,29 +24,6 @@ import (
 	"github.com/ethersphere/swarm"
 	config "github.com/ethersphere/swarm/api"
 )
-import (
-	"strings"
-
-	"github.com/ethereum/go-ethereum/p2p/enode"
-)
-
-// LogData comment
-type LogData struct {
-	lines []string
-}
-
-func (logData *LogData) logAppend(line string) *LogData {
-	logData.lines = append(logData.lines, line)
-	return logData
-}
-
-func (logData *LogData) toString() string {
-	s := ""
-	for i := 0; i < len(logData.lines); i++ {
-		s += fmt.Sprintf("\n[%d]: %v", i, logData.lines[i])
-	}
-	return s
-}
 
 var swarmNode *node.Node
 
@@ -59,7 +38,7 @@ func getBootnodeURL(bootnodeURL string) string {
 	return bootnodeURL
 }
 
-func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts.Account, logData *LogData) (stack *node.Node, _ error) {
+func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts.Account) (stack *node.Node, _ error) {
 
 	resultNode := &node.Node{}
 	// Create the empty networking stack
@@ -100,11 +79,11 @@ func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts
 	pssAccount := account.Address.Hex()
 	pssPassword := passphrase
 
-	logData.logAppend(fmt.Sprintf("pssAccount: %v, pssPassword %v", pssAccount, pssPassword))
+	log.Info(fmt.Sprintf("pssAccount: %v, pssPassword %v", pssAccount, pssPassword))
 
 	bzzSvc := func(ctx *node.ServiceContext) (node.Service, error) {
 		//ks := rawStack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
-		logData.logAppend(fmt.Sprintf("ks: %v", ks))
+		log.Info(fmt.Sprintf("ks: %v", ks))
 		var a accounts.Account
 		var err error
 		if common.IsHexAddress(pssAccount) {
@@ -127,7 +106,7 @@ func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts
 			return nil, fmt.Errorf("Can't load swarm account key: %v", err)
 		}
 
-		logData.logAppend(fmt.Sprintf("keyjson %v", keyjson))
+		log.Info(fmt.Sprintf("keyjson %v", keyjson))
 		var bzzkey *ecdsa.PrivateKey
 		//for i := 0; i < 3; i++ {
 		//	password := getPassPhrase(fmt.Sprintf("Unlocking swarm account %s [%d/3]", a.Address.Hex(), i+1), i, passwords)
@@ -162,7 +141,6 @@ func StartNode(path, listenAddr, cBootnodeURL, loglevel string) string {
 	// set logging to stdout
 	overrideRootLog(true, loglevel, "", false)
 
-	logData := &LogData{}
 	log.Info("----------- starting node ---------------")
 	dir := path + "/keystore/ethereum"
 	if _, err := os.Stat(dir); err != nil {
@@ -183,19 +161,15 @@ func StartNode(path, listenAddr, cBootnodeURL, loglevel string) string {
 		return "error 1.7: " + err.Error()
 	}
 
-	swarmNode, err = newNodeWithKeystore(dir, ks, account, logData)
+	swarmNode, err = newNodeWithKeystore(dir, ks, account)
 	if err != nil {
 		return "error 2: " + err.Error()
 	}
 	err = swarmNode.Start()
 	if err != nil {
-		return "error 3: " + err.Error() + logData.toString()
+		return "error 3: " + err.Error()
 	}
 
-	// err = swarmNode.node.AddPeer(getBootnodeURL(C.GoString(cBootnodeURL)))
-	// if err != nil {
-	// 	return C.CString("error 4: " + err.Error())
-	// }
 	swarmNode.Wait()
 	log.Info("----------- node started ---------------")
 	return fmt.Sprintf("%v", account.Address.Hex())
