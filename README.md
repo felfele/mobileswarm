@@ -12,7 +12,7 @@ https://godoc.org/golang.org/x/mobile/cmd/gomobile
 
 After this you can build Mobileswarm:
 
-` $ cd $GOPATH/src/github.com/felfele/mobileswarm
+` $ cd $GOPATH/src/github.com/felfele/mobileswarm`
 
 Make android version:
 
