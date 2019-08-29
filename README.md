@@ -4,7 +4,7 @@ Build [Ethereum Swarm](https://swarm.ethereum.org/) on mobile
 
 ### Dependencies
 
-In order to build the keydrop-go library you will need to have `gomobile` installed.
+In order to build the library you will need to have `gomobile` installed.
 
 https://godoc.org/golang.org/x/mobile/cmd/gomobile
 
