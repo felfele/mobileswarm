@@ -170,7 +170,6 @@ func StartNode(path, listenAddr, cBootnodeURL, loglevel string) string {
 		return "error 3: " + err.Error()
 	}
 
-	swarmNode.Wait()
 	log.Info("----------- node started ---------------")
 	return fmt.Sprintf("%v", account.Address.Hex())
 }
