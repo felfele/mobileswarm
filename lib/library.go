@@ -20,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/ethereum/go-ethereum/log"
-	logger "github.com/ethereum/go-ethereum/log"
 	"github.com/ethersphere/swarm"
 	config "github.com/ethersphere/swarm/api"
 )
@@ -184,7 +183,7 @@ func StopNode() string {
 		return "error stopping node: " + err.Error()
 	}
 	swarmNode = nil
-	return "ok"
+	return "swarmNode closed"
 
 }
 
@@ -201,12 +200,6 @@ func overrideRootLog(enabled bool, levelStr string, logFile string, terminal boo
 
 func disableRootLog() {
 	log.Root().SetHandler(log.DiscardHandler())
-}
-
-func logHandler(record *logger.Record) error {
-	s := fmt.Sprintf("%s %v", record.Msg, record.Ctx)
-	fmt.Printf("%s\n", s)
-	return nil
 }
 
 func enableRootLog(levelStr string, logFile string, terminal bool) error {
@@ -236,7 +229,7 @@ func enableRootLog(levelStr string, logFile string, terminal bool) error {
 	glogger := log.NewGlogHandler(handler)
 	glogger.Verbosity(log.Lvl(level))
 
-	log.Root().SetHandler(log.FuncHandler(logHandler))
+	log.Root().SetHandler(glogger)
 
 	return nil
 }
