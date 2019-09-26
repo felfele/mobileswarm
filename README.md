@@ -1,6 +1,6 @@
 ## Mobileswarm
 
-Build [Ethereum Swarm](https://swarm.ethereum.org/) on mobile
+Build [Ethereum Swarm](https://github.com/ethersphere/swarm/) on mobile
 
 ### Dependencies
 
