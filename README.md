@@ -66,3 +66,7 @@ Then you can use it in the Objective-C code like this:
 
 
 ```
+
+#### Issues
+
+Currently Swarm has a vendored dependency of `go-ethereum` which causes the build to break. A workaround for this problem is to rename or delete the `vendor/github.com/ethereum/go-ethereum` directory in the Swarm source.
