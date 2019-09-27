@@ -16,7 +16,7 @@ After this you can build Mobileswarm:
 
 #### Make android version:
 
-` $ gomobile bind -target=android  -ldflags="-s -w" -o build/mobileswarm.aar github.com/felfele/mobileswarm/lib`
+` $ make android`
 
 This will build an android archive (`.aar`) file called `mobileswarm.aar` in the `build/` directory. You can copy this file to your android project.
 
@@ -40,7 +40,7 @@ import mobileswarm.Mobileswarm;
 
 #### Make iOS version:
 
-` $ gomobile bind -target=ios -ldflags="-s -w" -o build/Mobileswarm.framework github.com/felfele/mobileswarm/lib`
+` $ make ios`
 
 This will build an iOS framework, called `Mobileswarm.framework` in the `build/` directory. You can copy this directory to your iOS project.
 
