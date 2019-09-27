@@ -27,12 +27,13 @@ import (
 var swarmNode *node.Node
 
 // DefaultBootnodeURL used for bootstrapping
-const DefaultBootnodeURL = "enode://4c113504601930bf2000c29bcd98d1716b6167749f58bad703bae338332fe93cc9d9204f08afb44100dc7bea479205f5d162df579f9a8f76f8b402d339709023@3.122.203.99:30301"
-const passphrase = "test"
+const defaultBootnodeURL = "enode://4c113504601930bf2000c29bcd98d1716b6167749f58bad703bae338332fe93cc9d9204f08afb44100dc7bea479205f5d162df579f9a8f76f8b402d339709023@3.122.203.99:30301"
+const defaultPassphrase = "test"
+const keyStoreDirName = "keystore"
 
 func getBootnodeURL(bootnodeURL string) string {
 	if bootnodeURL == "" {
-		return DefaultBootnodeURL
+		return defaultBootnodeURL
 	}
 	return bootnodeURL
 }
@@ -49,7 +50,7 @@ func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts
 		Name:        clientIdentifier,
 		Version:     params.Version,
 		DataDir:     datadir,
-		KeyStoreDir: filepath.Join(datadir, "keystore"), // Mobile should never use internal keystores!
+		KeyStoreDir: filepath.Join(datadir, keyStoreDirName),
 		WSHost:      "localhost",
 		WSPort:      8546,
 		WSOrigins:   []string{"*"},
@@ -66,7 +67,7 @@ func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts
 			ListenAddr:     ":30303",
 			MaxPeers:       50,
 			NAT:            nat.Any(),
-			BootstrapNodes: append(bootstrapNodes, enode.MustParse(DefaultBootnodeURL)),
+			BootstrapNodes: append(bootstrapNodes, enode.MustParse(defaultBootnodeURL)),
 		},
 	}
 
@@ -76,7 +77,7 @@ func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts
 	}
 
 	pssAccount := account.Address.Hex()
-	pssPassword := passphrase
+	pssPassword := defaultPassphrase
 
 	log.Info(fmt.Sprintf("pssAccount: %v, pssPassword %v", pssAccount, pssPassword))
 
@@ -132,6 +133,27 @@ func newNodeWithKeystore(datadir string, ks *keystore.KeyStore, account accounts
 	return resultNode, nil
 }
 
+func makeDir(dir string) error {
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			err := os.MkdirAll(dir, 0700)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
+func getAccount(ks *keystore.KeyStore, passphrase string) (accounts.Account, error) {
+	if len(ks.Accounts()) > 0 {
+		return ks.Accounts()[0], nil
+	}
+	return ks.NewAccount(passphrase)
+}
+
 //StartNode - start the Swarm node
 func StartNode(path, listenAddr, cBootnodeURL, loglevel string) string {
 	if swarmNode != nil {
@@ -141,24 +163,19 @@ func StartNode(path, listenAddr, cBootnodeURL, loglevel string) string {
 	overrideRootLog(true, loglevel, "", false)
 
 	log.Info("----------- starting node ---------------")
-	dir := path + "/keystore/ethereum"
-	if _, err := os.Stat(dir); err != nil {
-		if os.IsNotExist(err) {
-			err := os.MkdirAll(dir, 0700)
-			if err != nil {
-				return "error 1: " + err.Error()
-			}
-		} else {
-			return "error 1.5: " + err.Error()
-		}
+	dir := filepath.Join(path, keyStoreDirName)
+	if err := makeDir(dir); err != nil {
+		return "error during makeDir: " + err.Error()
 	}
 
 	ks := keystore.NewKeyStore(dir, keystore.LightScryptN, keystore.LightScryptP)
 
-	account, err := ks.NewAccount(passphrase)
+	account, err := getAccount(ks, defaultPassphrase)
 	if err != nil {
 		return "error 1.7: " + err.Error()
 	}
+
+	log.Info("after getAccount", "account", account)
 
 	swarmNode, err = newNodeWithKeystore(dir, ks, account)
 	if err != nil {
